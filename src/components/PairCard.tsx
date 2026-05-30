@@ -1,4 +1,5 @@
 import type { PairResult } from '../types'
+import { CategoryBadge } from './CategoryBadge'
 
 interface PairCardProps {
   pair: PairResult
@@ -32,11 +33,13 @@ function StatPill({
 function LegCard({
   side,
   asset,
+  category,
   avgDailyFunding,
   fundingContribution,
 }: {
   side: 'LONG' | 'SHORT'
   asset: string
+  category: PairResult['longCategory']
   avgDailyFunding: number
   fundingContribution: number
 }) {
@@ -49,12 +52,13 @@ function LegCard({
 
   return (
     <div className={`flex-1 rounded-lg border ${borderColor} ${bgColor} p-5`}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <span className={`text-xs font-mono font-bold ${sideColor} uppercase tracking-widest`}>
           {side}
         </span>
-        <span className="text-2xl font-mono font-bold text-white">{asset}</span>
+        <CategoryBadge category={category} size="xs" />
       </div>
+      <p className="text-2xl font-mono font-bold text-white mb-4">{asset}</p>
       <div className="space-y-3">
         <StatPill
           label="Avg Daily Funding"
@@ -76,9 +80,7 @@ export function PairCard({ pair }: PairCardProps) {
     pair.correlation < -0.3 ? 'positive' : pair.correlation > 0.3 ? 'negative' : 'neutral'
   const corrSign = pair.correlation >= 0 ? '+' : ''
 
-  // Long income: receives when avgDailyFundingLong < 0, pays when > 0
   const longIncome = -pair.avgDailyFundingLong / 100
-  // Short income: receives when avgDailyFundingShort > 0
   const shortIncome = pair.avgDailyFundingShort / 100
 
   return (
@@ -94,6 +96,7 @@ export function PairCard({ pair }: PairCardProps) {
         <LegCard
           side="LONG"
           asset={pair.longAsset}
+          category={pair.longCategory}
           avgDailyFunding={pair.avgDailyFundingLong / 100}
           fundingContribution={longIncome}
         />
@@ -105,6 +108,7 @@ export function PairCard({ pair }: PairCardProps) {
         <LegCard
           side="SHORT"
           asset={pair.shortAsset}
+          category={pair.shortCategory}
           avgDailyFunding={pair.avgDailyFundingShort / 100}
           fundingContribution={shortIncome}
         />

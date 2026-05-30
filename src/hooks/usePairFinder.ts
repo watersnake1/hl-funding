@@ -9,9 +9,9 @@ import {
 import { prepareAssetData, findBestPairs } from '../utils/algorithm'
 import type { AssetData, PairResult } from '../types'
 
-const TOP_ASSETS_COUNT = 25
-const BATCH_SIZE = 2
-const BATCH_DELAY_MS = 600
+const TOP_ASSETS_COUNT = 60
+const BATCH_SIZE = 4
+const BATCH_DELAY_MS = 500
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms))

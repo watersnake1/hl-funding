@@ -1,3 +1,7 @@
+import type { AssetCategory } from './utils/assetCategories'
+
+export type { AssetCategory }
+
 export interface Asset {
   name: string
   szDecimals: number
@@ -40,6 +44,7 @@ export interface Candle {
 
 export interface AssetData {
   name: string
+  category: AssetCategory
   fundingHistory: FundingEntry[]
   candles: Candle[]
   avgDailyFundingRate: number
@@ -48,7 +53,9 @@ export interface AssetData {
 
 export interface PairResult {
   longAsset: string
+  longCategory: AssetCategory
   shortAsset: string
+  shortCategory: AssetCategory
   fundingAPY: number
   correlation: number
   compositeScore: number

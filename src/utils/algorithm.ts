@@ -1,5 +1,6 @@
 import type { AssetData, PairResult } from '../types'
 import { pearsonCorrelation, calcAvgDailyFundingRate, calcDailyReturns } from './stats'
+import { getAssetCategory } from './assetCategories'
 
 const FUNDING_WEIGHT = 0.7
 const CORRELATION_WEIGHT = 0.3
@@ -12,6 +13,7 @@ export function prepareAssetData(
 ): AssetData {
   return {
     name,
+    category: getAssetCategory(name),
     fundingHistory,
     candles,
     avgDailyFundingRate: calcAvgDailyFundingRate(fundingHistory),
@@ -48,7 +50,9 @@ export function findBestPairs(assets: AssetData[]): PairResult[] {
 
       candidates.push({
         longAsset: longAsset.name,
+        longCategory: longAsset.category,
         shortAsset: shortAsset.name,
+        shortCategory: shortAsset.category,
         fundingAPY,
         correlation,
         compositeScore: 0,
