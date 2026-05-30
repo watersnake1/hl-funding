@@ -45,6 +45,6 @@ export async function fetchCandles(
 
 export function getLookbackWindow(): { startTime: number; endTime: number } {
   const endTime = Date.now()
-  const startTime = endTime - 14 * 24 * 60 * 60 * 1000
+  const startTime = endTime - 30 * 24 * 60 * 60 * 1000
   return { startTime, endTime }
 }

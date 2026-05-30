@@ -47,7 +47,7 @@ export function TopPairsTable({ pairs, selectedIndex, onSelect }: TopPairsTableP
         <div className="flex items-center gap-2 mr-2">
           <span className="h-1.5 w-6 rounded-full bg-accent" />
           <h3 className="text-xs font-mono font-semibold text-muted uppercase tracking-widest">
-            Top {pairs.length} Pairs
+            Top {pairs.length} Pairs by Score
           </h3>
         </div>
 

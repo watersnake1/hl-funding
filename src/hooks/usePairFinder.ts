@@ -7,14 +7,20 @@ import {
   getLookbackWindow,
 } from '../api/hyperliquid'
 import { prepareAssetData, findBestPairs } from '../utils/algorithm'
-import type { AssetData, PairResult } from '../types'
+import { getAssetCategory } from '../utils/assetCategories'
+import type { AssetData, AssetCategory, PairResult } from '../types'
 
-const TOP_ASSETS_COUNT = 60
-const BATCH_SIZE = 4
-const BATCH_DELAY_MS = 500
+const BATCH_SIZE = 5
+const BATCH_DELAY_MS = 400
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms))
+}
+
+export interface UniverseSummary {
+  category: AssetCategory
+  count: number
+  coins: string[]
 }
 
 interface UsePairFinderResult {
@@ -23,6 +29,7 @@ interface UsePairFinderResult {
   isLoading: boolean
   loadedCount: number
   totalCount: number
+  universeSummary: UniverseSummary[]
   error: Error | null
   lastUpdated: Date | null
   refetch: () => void
@@ -39,7 +46,7 @@ export function usePairFinder(): UsePairFinderResult {
     staleTime: 5 * 60 * 1000,
   })
 
-  const topCoins = useMemo(() => {
+  const allCoins = useMemo(() => {
     if (!metaQuery.data) return []
     const [meta, ctxs] = metaQuery.data
     return meta.universe
@@ -50,20 +57,31 @@ export function usePairFinder(): UsePairFinderResult {
       }))
       .filter((a) => a.notionalOI > 0)
       .sort((a, b) => b.notionalOI - a.notionalOI)
-      .slice(0, TOP_ASSETS_COUNT)
       .map((a) => a.name)
   }, [metaQuery.data])
 
+  const universeSummary: UniverseSummary[] = useMemo(() => {
+    const grouped: Record<AssetCategory, string[]> = {
+      crypto: [], equity: [], commodity: [], index: [], forex: [], preipo: [],
+    }
+    for (const name of allCoins) {
+      grouped[getAssetCategory(name)].push(name)
+    }
+    return (Object.entries(grouped) as [AssetCategory, string[]][])
+      .filter(([, coins]) => coins.length > 0)
+      .map(([category, coins]) => ({ category, count: coins.length, coins }))
+  }, [allCoins])
+
   const assetDataQuery = useQuery({
-    queryKey: ['assetData', topCoins, startTime, refreshToken],
-    enabled: topCoins.length > 0,
+    queryKey: ['assetData', allCoins, startTime, refreshToken],
+    enabled: allCoins.length > 0,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<AssetData[]> => {
       setLoadedCount(0)
       const results: AssetData[] = []
 
-      for (let i = 0; i < topCoins.length; i += BATCH_SIZE) {
-        const batch = topCoins.slice(i, i + BATCH_SIZE)
+      for (let i = 0; i < allCoins.length; i += BATCH_SIZE) {
+        const batch = allCoins.slice(i, i + BATCH_SIZE)
 
         const batchResults = await Promise.allSettled(
           batch.map(async (coin) => {
@@ -86,7 +104,7 @@ export function usePairFinder(): UsePairFinderResult {
 
         setLoadedCount(results.length)
 
-        if (i + BATCH_SIZE < topCoins.length) {
+        if (i + BATCH_SIZE < allCoins.length) {
           await delay(BATCH_DELAY_MS)
         }
       }
@@ -101,10 +119,9 @@ export function usePairFinder(): UsePairFinderResult {
   }, [assetDataQuery.data])
 
   const isLoading =
-    metaQuery.isLoading || (topCoins.length > 0 && assetDataQuery.isLoading)
+    metaQuery.isLoading || (allCoins.length > 0 && assetDataQuery.isLoading)
 
-  const totalCount = topCoins.length
-
+  const totalCount = allCoins.length
   const error = (metaQuery.error ?? assetDataQuery.error) as Error | null
 
   const lastUpdated = useMemo(
@@ -123,6 +140,7 @@ export function usePairFinder(): UsePairFinderResult {
     isLoading,
     loadedCount,
     totalCount,
+    universeSummary,
     error,
     lastUpdated,
     refetch,

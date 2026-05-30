@@ -36,7 +36,7 @@ export function LoadingState({ loadedCount, totalCount }: LoadingStateProps) {
       )}
 
       <p className="text-muted text-xs font-mono text-center max-w-xs">
-        Fetching 14-day funding history and price data for top {totalCount || '40'} assets by open
+        Fetching 30-day funding history and price data for {totalCount || 'all'} assets by open
         interest...
       </p>
     </div>

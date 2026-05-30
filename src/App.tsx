@@ -6,9 +6,10 @@ import { PairCard } from './components/PairCard'
 import { FundingRateChart } from './components/FundingRateChart'
 import { PriceChart } from './components/PriceChart'
 import { TopPairsTable } from './components/TopPairsTable'
+import { UniverseSummaryBar } from './components/UniverseSummary'
 
 export default function App() {
-  const { pairs, isLoading, loadedCount, totalCount, error, lastUpdated, refetch } =
+  const { pairs, isLoading, loadedCount, totalCount, universeSummary, error, lastUpdated, refetch } =
     usePairFinder()
 
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -41,6 +42,8 @@ export default function App() {
           <LoadingState loadedCount={loadedCount} totalCount={totalCount} />
         ) : displayedPair ? (
           <div className="flex flex-col gap-6">
+            <UniverseSummaryBar summary={universeSummary} />
+
             <PairCard pair={displayedPair} />
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

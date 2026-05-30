@@ -12,7 +12,7 @@ export function Header({ lastUpdated, isLoading, onRefresh }: HeaderProps) {
           Hyperliquid Pair Optimizer
         </h1>
         <p className="text-xs text-muted mt-0.5 font-mono">
-          14d lookback · 2× leverage · 50/50 capital split · 70% funding / 30% correlation score
+          30d lookback · 2× leverage · 50/50 capital split · 70% funding / 30% correlation score
         </p>
       </div>
       <div className="flex items-center gap-4">

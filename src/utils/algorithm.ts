@@ -4,7 +4,6 @@ import { getAssetCategory } from './assetCategories'
 
 const FUNDING_WEIGHT = 0.7
 const CORRELATION_WEIGHT = 0.3
-const TOP_N_PAIRS = 10
 
 export function prepareAssetData(
   name: string,
@@ -80,5 +79,5 @@ export function findBestPairs(assets: AssetData[]): PairResult[] {
   })
 
   scored.sort((a, b) => b.compositeScore - a.compositeScore)
-  return scored.slice(0, TOP_N_PAIRS)
+  return scored
 }
