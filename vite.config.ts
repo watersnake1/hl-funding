@@ -8,7 +8,7 @@ export default defineConfig({
       '/api/hl': {
         target: 'https://api.hyperliquid.xyz',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/hl/, ''),
+        rewrite: () => '/info',
       },
     },
   },

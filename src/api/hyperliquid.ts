@@ -1,6 +1,6 @@
 import type { Asset, AssetCtx, FundingEntry, Candle } from '../types'
 
-const HL_API = '/api/hl/info'
+const HL_API = '/api/hl'
 
 async function post<T>(body: Record<string, unknown>, attempt = 0): Promise<T> {
   const res = await fetch(HL_API, {
