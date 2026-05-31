@@ -66,6 +66,19 @@ export interface PairResult {
   longCandles: Candle[]
   shortCandles: Candle[]
   dailyIncomePerK: number
+
+  // 30-day historical PnL at 2× leverage, 50/50 capital split
+  // All values are % of total capital (2× leverage × 50% capital = ×1 factor)
+  longEntryPrice: number
+  longExitPrice: number
+  shortEntryPrice: number
+  shortExitPrice: number
+  longPricePnL: number       // % — price action on long leg
+  shortPricePnL: number      // % — price action on short leg (negative = asset rose)
+  combinedPricePnL: number   // % — long + short price PnL
+  fundingPnL: number         // % — actual sum of all funding payments over window
+  netPnL: number             // % — combinedPricePnL + fundingPnL
+  netPnLPerK: number         // $ — net PnL per $1,000 total capital
 }
 
 export interface MetaAndAssetCtxs {

@@ -20,6 +20,25 @@ export function prepareAssetData(
   }
 }
 
+// 2× leverage, 50/50 capital split → notional per leg = total capital
+// So all PnL fractions map 1:1 to total capital (the ×2 and ×0.5 cancel)
+function calcPricePnLPct(candles: AssetData['candles']): {
+  entry: number
+  exit: number
+  pnlPct: number
+} {
+  if (candles.length === 0) return { entry: 0, exit: 0, pnlPct: 0 }
+  const entry = parseFloat(candles[0].o)
+  const exit = parseFloat(candles[candles.length - 1].c)
+  const pnlPct = entry > 0 ? ((exit - entry) / entry) * 100 : 0
+  return { entry, exit, pnlPct }
+}
+
+function calcTotalFundingPct(fundingHistory: AssetData['fundingHistory']): number {
+  // Sum of all 8-hourly funding rates over the window (as % of notional = total capital)
+  return fundingHistory.reduce((sum, e) => sum + parseFloat(e.fundingRate), 0) * 100
+}
+
 export function findBestPairs(assets: AssetData[]): PairResult[] {
   const candidates: PairResult[] = []
 
@@ -30,13 +49,11 @@ export function findBestPairs(assets: AssetData[]): PairResult[] {
       const longAsset = assets[i]
       const shortAsset = assets[j]
 
-      // Long pays when funding > 0, receives when < 0
-      // Short receives when funding > 0, pays when < 0
-      // Net daily income rate = avgDailyRate_short - avgDailyRate_long
-      // At 2x leverage with 50/50 split: notional = total capital
+      // Funding: long pays when rate > 0, receives when < 0
+      //          short receives when rate > 0, pays when < 0
+      // Net daily income = avgDailyRate_short - avgDailyRate_long
       const netDailyRate = shortAsset.avgDailyFundingRate - longAsset.avgDailyFundingRate
       const fundingAPY = netDailyRate * 365 * 100
-
       if (fundingAPY <= 0) continue
 
       const minLen = Math.min(longAsset.dailyReturns.length, shortAsset.dailyReturns.length)
@@ -46,6 +63,22 @@ export function findBestPairs(assets: AssetData[]): PairResult[] {
         longAsset.dailyReturns.slice(0, minLen),
         shortAsset.dailyReturns.slice(0, minLen)
       )
+
+      // 30-day historical PnL
+      const longPrice = calcPricePnLPct(longAsset.candles)
+      const shortPrice = calcPricePnLPct(shortAsset.candles)
+
+      const longPricePnL = longPrice.pnlPct          // positive = asset rose = good for long
+      const shortPricePnL = -shortPrice.pnlPct        // positive = asset fell = good for short
+
+      const combinedPricePnL = longPricePnL + shortPricePnL
+
+      // Actual realized funding: short receives, long pays
+      const totalShortFunding = calcTotalFundingPct(shortAsset.fundingHistory)
+      const totalLongFunding = calcTotalFundingPct(longAsset.fundingHistory)
+      const fundingPnL = totalShortFunding - totalLongFunding  // net received
+
+      const netPnL = combinedPricePnL + fundingPnL
 
       candidates.push({
         longAsset: longAsset.name,
@@ -62,6 +95,16 @@ export function findBestPairs(assets: AssetData[]): PairResult[] {
         longCandles: longAsset.candles,
         shortCandles: shortAsset.candles,
         dailyIncomePerK: (fundingAPY / 100 / 365) * 1000,
+        longEntryPrice: longPrice.entry,
+        longExitPrice: longPrice.exit,
+        shortEntryPrice: shortPrice.entry,
+        shortExitPrice: shortPrice.exit,
+        longPricePnL,
+        shortPricePnL,
+        combinedPricePnL,
+        fundingPnL,
+        netPnL,
+        netPnLPerK: netPnL * 10,
       })
     }
   }
@@ -72,7 +115,6 @@ export function findBestPairs(assets: AssetData[]): PairResult[] {
 
   const scored = candidates.map((p) => {
     const normalizedAPY = maxAPY > 0 ? p.fundingAPY / maxAPY : 0
-    // corrScore: correlation=-1 → 1.0 (best), correlation=+1 → 0.0 (worst)
     const corrScore = (-p.correlation + 1) / 2
     const compositeScore = FUNDING_WEIGHT * normalizedAPY + CORRELATION_WEIGHT * corrScore
     return { ...p, compositeScore }
